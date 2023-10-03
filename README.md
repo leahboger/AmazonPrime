@@ -7,7 +7,7 @@ Resources: <br />
   - [Kaggle Data Set][2]
 
 
-[1]: https://leahboger.github.io/ZeroInflatedPoissonValidation/
+[1]: https://leahboger.github.io/AmazonPrime/
 [2]: https://www.kaggle.com/datasets/dgoenrique/amazon-prime-movies-and-tv-shows
 
 
