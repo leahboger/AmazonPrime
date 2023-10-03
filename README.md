@@ -1,12 +1,14 @@
 
-<h1>Amazon Prime Data Set (Data Visualization and Data Wrangling)</h1>
-Knitted Project Markdown: <br />
+<h1>Amazon Prime Data Set (Data Visualization and Data Wrangling)</h1> 
+Resources: <br />
   
   
-  - [Amazon Prime][1]
+  - [Knitted Markdown][1]
+  - [Kaggle Data Set][2]
 
 
 [1]: https://leahboger.github.io/ZeroInflatedPoissonValidation/
+[2]: https://www.kaggle.com/datasets/dgoenrique/amazon-prime-movies-and-tv-shows
 
 
 <h2>Description</h2>
@@ -20,4 +22,3 @@ This was a final project for a Data Science 101 course at Loyola University Chic
   - <b>tidyverse</b>
   - <b>plotly</b>
   - <b>mdsr</b>
-  
