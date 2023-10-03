@@ -1,0 +1,123 @@
+---
+title: "Amazon Prime"
+author: "Leah Boger"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Amazon Prime Movies and TV
+link to kaggle: https://www.kaggle.com/datasets/dgoenrique/amazon-prime-movies-and-tv-shows
+
+```{r}
+library(tidyverse)
+titles <- read.csv("/Users/leahboger/Desktop/amazon prime/titles.csv")
+credits <- read.csv("/Users/leahboger/Desktop/amazon prime/credits.csv")
+```
+
+
+Q1) Which shows/movies have the largest difference in imdb score vs tmdb score, and what is that difference?
+A: Zone Drifter has the largest difference in scores (7.7 pt difference). After looking at the amount of votes/ popularity of the top five largest discrepancies, it seems that the larger discrepancies are very unpopular films, so there is most likely more variance in the ratings.
+```{r}
+titles %>% mutate(score_diff = abs(imdb_score - tmdb_score)) %>% arrange(-score_diff) %>% select(title, score_diff, imdb_score, imdb_votes, tmdb_score, tmdb_popularity) %>% head(5)
+```
+
+Q2) Create a graph to show how the average length of movies changed over time.
+```{r}
+library(plotly)
+library(mdsr)
+avg_time_per_year <- titles %>% filter(type == "MOVIE") %>% group_by(release_year) %>% summarize(avg_length = mean(runtime))
+
+static_plot <- avg_time_per_year %>% ggplot(aes(x = release_year, y = avg_length)) + geom_line() + xlab("Release Year") + ylab("Average Movie Length")
+
+ggplotly(static_plot)
+
+```
+
+
+
+Q3) Make a graph to explore a possible correlation between runtime and average rating(the average of the imdb and tmdb scores).
+```{r}
+#incorrect data point removal
+titles %>% filter(runtime == 940) %>% select(title)
+#after checking amazon.com, this movie is 93 minutes, below this data point will be fixed
+titles %>% filter(runtime == 328) %>% select(title)
+#after checking amazon.com, this movie is 88 minutes, below this data point will be fixed
+
+corrected_outliers <- titles %>% mutate(runtime = case_when(title == "Once Bitten" & runtime == 940 ~ 93, title == "Custer's Last Stand" & runtime == 328 ~ 88, TRUE ~ runtime))
+
+
+
+
+avg_rating <- corrected_outliers %>% mutate(avg_rating = (imdb_score + tmdb_score)/2) %>% select(type, avg_rating, runtime)
+
+static_plot2 <- avg_rating %>% ggplot(aes(x = runtime, y = avg_rating)) + geom_point() + facet_wrap( ~ type) + geom_smooth() + ylab("Average Rating") + xlab("Runtime") + xlim(0,350)
+
+ggplotly(static_plot2)
+
+
+
+```
+
+Q4) What actor has been in the most TV shows + Movies and which TV shows and movies were they in? What director?
+A: The actor in the most media is George 'Gabby' Hayes, being in 53 movies. The Director in the most media is Joesph Kane, working on 45 movies
+```{r}
+#actor
+top_actor <- credits %>% filter(role == "ACTOR") %>% group_by(person_id, name) %>% summarize(num_film = length(unique(id))) %>% arrange(-num_film) %>% head(1) %>% pull(person_id)
+
+top_actor_name <- credits %>% filter(role == "ACTOR") %>% group_by(person_id, name) %>% summarize(num_film = length(unique(id))) %>% arrange(-num_film) %>% head(1) %>% pull(name)
+
+ls_films_w_actor <- credits %>% filter(person_id == top_actor) %>% group_by(id) %>% summarize(id = id)
+
+filmsact <- ls_films_w_actor %>% left_join(titles, by = c("id")) %>% select(title, type, seasons, imdb_score)
+
+#top actor
+top_actor_name
+filmsact 
+nrow(filmsact)
+unique(filmsact$type)
+
+#director
+top_director <- credits %>% filter(role == "DIRECTOR") %>% group_by(person_id, name) %>% summarize(num_film = length(unique(id))) %>% arrange(-num_film) %>% head(1) %>% pull(person_id)
+
+top_director_name <- credits %>% filter(role == "DIRECTOR") %>% group_by(person_id, name) %>% summarize(num_film = length(unique(id))) %>% arrange(-num_film) %>% head(1) %>% pull(name)
+
+ls_films_w_director <- credits %>% filter(person_id == top_director) %>% group_by(id) %>% summarize(id = id)
+
+filmsdir <- ls_films_w_director %>% left_join(titles, by = c("id")) %>% select(title, type, seasons, imdb_score)
+
+#top director
+
+top_director_name
+filmsdir
+nrow(filmsdir)
+unique(filmsdir$type)
+
+
+
+
+```
+
+
+Q5) Graph the number of productions a person worked on versus the average imdb score those productions have. Facet by role in the media.  
+```{r}
+
+number_films <- credits %>% group_by(person_id) %>% summarize(num_film = length(unique(id)))
+
+
+person_w_id <- credits %>% group_by(person_id, id, role) %>% summarize(id = id) %>% select(person_id, id, role)
+
+
+imdb_w_filmnum <- person_w_id %>% left_join(titles, by = c("id")) %>% group_by(person_id, role) %>% summarize(avg_imdb = mean(imdb_score)) %>% left_join(number_films, by = c("person_id"))
+
+
+imdb_w_filmnum %>% ggplot(aes(x= num_film, y = avg_imdb)) + geom_point() + facet_wrap( ~ role) + xlab("Number of Productions Worked On") + ylab("Average IMDB Score")
+
+```
+
+
+
+
